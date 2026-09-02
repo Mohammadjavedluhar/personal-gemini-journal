@@ -1,0 +1,6 @@
+{
+  "name": "Personal Gemini Journal",
+  "description": "A Zero-Trust architecture personal journaling application powered by Gemini AI with cryptographic prompt isolation, STRIDE threat modeling defenses, strict UID isolation, and indestructible error handling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
