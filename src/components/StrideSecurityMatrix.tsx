@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, Lock, Terminal, ShieldAlert, Cpu, CheckCircle2, AlertTriangle, Key, Layers, Database } from 'lucide-react';
 import { StrideMatrixItem } from '../types.ts';
+import { safeFetchJson } from '../utils/safeFetch.ts';
 
 export const StrideSecurityMatrix: React.FC = () => {
   const [matrix, setMatrix] = useState<StrideMatrixItem[]>([]);
@@ -10,11 +11,10 @@ export const StrideSecurityMatrix: React.FC = () => {
 
   const fetchStrideData = async () => {
     try {
-      const res = await fetch('/api/security/stride-matrix');
-      const data = await res.json();
+      const data = await safeFetchJson<{ success: boolean; matrix: StrideMatrixItem[]; totalAuditLogs: number }>('/api/security/stride-matrix');
       if (data.success) {
         setMatrix(data.matrix);
-        setTotalLogs(data.totalAuditLogs);
+        setTotalLogs(data.totalAuditLogs || 0);
       }
     } catch (err) {
       console.error('Failed to fetch STRIDE status', err);

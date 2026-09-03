@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Terminal, RefreshCw, Filter, ShieldCheck, CheckCircle2, AlertTriangle, Lock, ShieldAlert } from 'lucide-react';
 import { SecurityAuditLog, ThreatCategoryCode } from '../types.ts';
+import { safeFetchJson } from '../utils/safeFetch.ts';
 
 export const SecurityAuditLogs: React.FC = () => {
   const [logs, setLogs] = useState<SecurityAuditLog[]>([]);
@@ -12,8 +13,7 @@ export const SecurityAuditLogs: React.FC = () => {
   const fetchAuditLogs = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/security/audit-logs');
-      const data = await res.json();
+      const data = await safeFetchJson<{ success: boolean; logs: SecurityAuditLog[]; activeUid: string }>('/api/security/audit-logs');
       if (data.success) {
         setLogs(data.logs);
         setActiveUid(data.activeUid);

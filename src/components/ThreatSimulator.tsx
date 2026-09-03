@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShieldAlert, Play, CheckCircle2, AlertOctagon, Terminal, ArrowRight, Layers, Lock, RefreshCw, Sparkles } from 'lucide-react';
 import { ThreatSimPayload, ThreatSimExecutionResult, UserPersona } from '../types.ts';
 import { PRESET_ATTACK_VECTORS } from '../data/mockData.ts';
+import { safeFetchJson } from '../utils/safeFetch.ts';
 
 interface ThreatSimulatorProps {
   currentPersona: UserPersona;
@@ -34,7 +35,11 @@ export const ThreatSimulator: React.FC<ThreatSimulatorProps> = ({
         rawPayload: customPayload
       };
 
-      const res = await fetch('/api/security/simulate-attack', {
+      const data = await safeFetchJson<{
+        success: boolean;
+        result: ThreatSimExecutionResult;
+        error?: string;
+      }>('/api/security/simulate-attack', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -43,8 +48,7 @@ export const ThreatSimulator: React.FC<ThreatSimulatorProps> = ({
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.error || 'Attack simulation failed.');
       }
 

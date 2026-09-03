@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, ShieldCheck, Lock, CheckCircle2, AlertTriangle, ArrowRight, Bookmark, Hash, RefreshCw, Layers, Shield } from 'lucide-react';
 import { MoodType, GeminiJournalAnalysis, SanitizationReport, JournalEntry, UserPersona } from '../types.ts';
+import { safeFetchJson } from '../utils/safeFetch.ts';
 
 interface JournalComposerProps {
   currentPersona: UserPersona;
@@ -79,7 +80,12 @@ export const JournalComposer: React.FC<JournalComposerProps> = ({
       await new Promise((r) => setTimeout(r, 300));
       setAnalysisStep('Gemini Structured Analysis (Strict JSON Schema Validation)...');
 
-      const response = await fetch('/api/journal/analyze', {
+      const data = await safeFetchJson<{
+        success: boolean;
+        analysis: GeminiJournalAnalysis;
+        sanitizationReport: SanitizationReport;
+        error?: string;
+      }>('/api/journal/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,9 +98,7 @@ export const JournalComposer: React.FC<JournalComposerProps> = ({
         })
       });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.error || 'A secure processing error occurred.');
       }
 

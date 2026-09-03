@@ -8,6 +8,7 @@ import { SecurityAuditLogs } from './components/SecurityAuditLogs.tsx';
 import { EntryDetailModal } from './components/EntryDetailModal.tsx';
 import { UserPersona, JournalEntry, MoodType, GeminiJournalAnalysis, SanitizationReport } from './types.ts';
 import { USER_PERSONAS } from './data/mockData.ts';
+import { safeFetchJson } from './utils/safeFetch.ts';
 
 export default function App() {
   const [currentPersona, setCurrentPersona] = useState<UserPersona>(USER_PERSONAS[0]);
@@ -20,16 +21,15 @@ export default function App() {
   const fetchEntries = async () => {
     setIsLoadingEntries(true);
     try {
-      const res = await fetch('/api/journal/entries', {
+      const data = await safeFetchJson<{ success: boolean; entries: JournalEntry[] }>('/api/journal/entries', {
         headers: {
           'x-user-id': currentPersona.uid
         }
       });
-      const data = await res.json();
       if (data.success) {
         setEntries(data.entries);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading isolated journal entries:', err);
     } finally {
       setIsLoadingEntries(false);
@@ -49,7 +49,7 @@ export default function App() {
     analysis?: GeminiJournalAnalysis;
     sanitizationReport?: SanitizationReport;
   }) => {
-    const res = await fetch('/api/journal/entries', {
+    const data = await safeFetchJson<{ success: boolean; entry: JournalEntry; error?: string }>('/api/journal/entries', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -58,8 +58,7 @@ export default function App() {
       body: JSON.stringify(entryData)
     });
 
-    const data = await res.json();
-    if (!res.ok || !data.success) {
+    if (!data.success) {
       throw new Error(data.error || 'Failed to save entry');
     }
 
@@ -68,20 +67,23 @@ export default function App() {
   };
 
   const handleDeleteEntry = async (entryId: string) => {
-    const res = await fetch(`/api/journal/entries/${entryId}`, {
-      method: 'DELETE',
-      headers: {
-        'x-user-id': currentPersona.uid
+    try {
+      const data = await safeFetchJson<{ success: boolean; error?: string }>(`/api/journal/entries/${entryId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': currentPersona.uid
+        }
+      });
+
+      if (!data.success) {
+        alert(data.error || 'Failed to delete entry');
+        return;
       }
-    });
 
-    const data = await res.json();
-    if (!res.ok || !data.success) {
-      alert(data.error || 'Failed to delete entry');
-      return;
+      setEntries((prev) => prev.filter((e) => e.id !== entryId));
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete entry');
     }
-
-    setEntries((prev) => prev.filter((e) => e.id !== entryId));
   };
 
   return (
