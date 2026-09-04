@@ -25,8 +25,16 @@ export class ApiError extends Error {
   url: string;
   isHtml: boolean;
 
-  constructor(message: string, status: number, statusText: string, rawText: string, url: string) {
-    super(message);
+  constructor(message: any, status: number, statusText: string, rawText: string, url: string) {
+    let cleanMessage = 'Unknown API error';
+    if (typeof message === 'string') {
+      cleanMessage = message;
+    } else if (message && typeof message === 'object') {
+      cleanMessage = message.message || message.code || JSON.stringify(message);
+    } else if (message !== undefined && message !== null) {
+      cleanMessage = String(message);
+    }
+    super(cleanMessage);
     this.name = 'ApiError';
     this.status = status;
     this.statusText = statusText;
@@ -133,8 +141,15 @@ export async function safeFetch<T = any>(
       } else {
         errorMessage = `Server returned non-JSON response (Status ${response.status}): ${rawText.slice(0, 150)}`;
       }
-    } else if (parsedData && typeof parsedData === 'object' && 'error' in (parsedData as any)) {
-      errorMessage = (parsedData as any).error;
+    } else if (parsedData && typeof parsedData === 'object') {
+      const errCandidate = (parsedData as any).error ?? (parsedData as any).message;
+      if (typeof errCandidate === 'string') {
+        errorMessage = errCandidate;
+      } else if (errCandidate && typeof errCandidate === 'object') {
+        errorMessage = errCandidate.message || (errCandidate.code ? `Error ${errCandidate.code}` : JSON.stringify(errCandidate));
+      } else {
+        errorMessage = `API request failed with status ${response.status} ${response.statusText}`;
+      }
     } else {
       errorMessage = `API request failed with status ${response.status} ${response.statusText}`;
     }

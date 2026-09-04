@@ -1,9 +1,8 @@
 import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
-import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
-import { JournalEntry, GeminiJournalAnalysis, SecurityAuditLog, SanitizationReport, StrideMatrixItem, ThreatSimPayload, ThreatSimExecutionResult } from './src/types.ts';
+import type { JournalEntry, GeminiJournalAnalysis, SecurityAuditLog, SanitizationReport, StrideMatrixItem, ThreatSimPayload, ThreatSimExecutionResult } from './src/types.ts';
 
 const app = express();
 const PORT = 3000;
@@ -872,6 +871,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Vite middleware & Static serving
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

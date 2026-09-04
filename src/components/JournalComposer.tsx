@@ -2,6 +2,26 @@ import React, { useState } from 'react';
 import { Sparkles, ShieldCheck, Lock, CheckCircle2, AlertTriangle, ArrowRight, Bookmark, Hash, RefreshCw, Layers, Shield } from 'lucide-react';
 import { MoodType, GeminiJournalAnalysis, SanitizationReport, JournalEntry, UserPersona } from '../types.ts';
 import { safeFetchJson } from '../utils/safeFetch.ts';
+import { generateClientSideJournalAnalysis } from '../utils/analysisFallback.ts';
+
+function formatErrorMessage(err: any): string {
+  if (!err) return 'An unexpected error occurred.';
+  if (typeof err === 'string') return err;
+  if (err.message && typeof err.message === 'string' && err.message !== '[object Object]') {
+    return err.message;
+  }
+  if (err.error) {
+    if (typeof err.error === 'string') return err.error;
+    if (typeof err.error.message === 'string') return err.error.message;
+    return JSON.stringify(err.error);
+  }
+  try {
+    const stringified = JSON.stringify(err);
+    return stringified !== '{}' ? stringified : 'An error occurred during secure processing.';
+  } catch {
+    return 'An error occurred during secure processing.';
+  }
+}
 
 interface JournalComposerProps {
   currentPersona: UserPersona;
@@ -98,7 +118,19 @@ export const JournalComposer: React.FC<JournalComposerProps> = ({
       setAnalysis(data.analysis);
       setSanitizationReport(data.sanitizationReport);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Error communicating with secure processing engine.');
+      // Automatic client-side fallback: synthesize structured reflection safely
+      const localResult = generateClientSideJournalAnalysis(content, mood, title);
+      setAnalysis(localResult.analysis);
+      setSanitizationReport(localResult.sanitizationReport);
+
+      const parsedError = formatErrorMessage(err);
+      if (parsedError.includes('FUNCTION_INVOCATION') || parsedError.includes('500') || parsedError.includes('HTML')) {
+        setErrorMsg(
+          'Analysis sealed via client-side defense engine. (If hosted on Vercel, ensure GEMINI_API_KEY is configured in Vercel Settings > Environment Variables).'
+        );
+      } else {
+        setErrorMsg(`Analysis synthesized using local resilience engine: ${parsedError}`);
+      }
     } finally {
       setIsAnalyzing(false);
       setAnalysisStep('');
@@ -128,7 +160,7 @@ export const JournalComposer: React.FC<JournalComposerProps> = ({
       setSanitizationReport(null);
       onNavigateToEntries();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to save entry securely.');
+      setErrorMsg(formatErrorMessage(err) || 'Failed to save entry securely.');
     } finally {
       setIsSaving(false);
     }
@@ -179,14 +211,24 @@ export const JournalComposer: React.FC<JournalComposerProps> = ({
               </span>
             </div>
 
-            {/* Error Banner */}
+            {/* Error / Notice Banner */}
             {errorMsg && (
-              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2.5">
-                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold">Security / Processing Notice</p>
-                  <p>{errorMsg}</p>
+              <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start justify-between gap-2.5">
+                <div className="flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">Security / Processing Notice</p>
+                    <p className="mt-0.5 leading-relaxed">{formatErrorMessage(errorMsg)}</p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setErrorMsg(null)}
+                  className="text-amber-500 hover:text-amber-800 text-sm font-bold leading-none px-1 py-0.5 rounded hover:bg-amber-100/50 transition-colors"
+                  title="Dismiss notice"
+                >
+                  &times;
+                </button>
               </div>
             )}
 
