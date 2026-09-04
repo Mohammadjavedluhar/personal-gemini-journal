@@ -33,15 +33,16 @@ export const JournalEntriesList: React.FC<JournalEntriesListProps> = ({
     return matchesSearch && matchesMood;
   });
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this cryptographically sealed entry?')) {
-      setDeletingId(id);
-      try {
-        await onDeleteEntry(id);
-      } finally {
-        setDeletingId(null);
-      }
+    setDeletingId(id);
+    try {
+      await onDeleteEntry(id);
+      setConfirmDeleteId(null);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -202,26 +203,55 @@ export const JournalEntriesList: React.FC<JournalEntriesListProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectEntry(entry);
-                      }}
-                      className="p-1.5 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 rounded-lg transition-colors"
-                      title="Inspect full entry & analysis"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={deletingId === entry.id}
-                      onClick={(e) => handleDelete(e, entry.id)}
-                      className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors disabled:opacity-50"
-                      title="Delete record (Zero-Trust IDOR check enforced)"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {confirmDeleteId === entry.id ? (
+                      <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-2 py-1 rounded-lg" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-[11px] text-rose-700 font-medium">Delete?</span>
+                        <button
+                          type="button"
+                          disabled={deletingId === entry.id}
+                          onClick={(e) => handleDelete(e, entry.id)}
+                          className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-semibold transition-colors"
+                        >
+                          {deletingId === entry.id ? 'Deleting...' : 'Yes'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDeleteId(null);
+                          }}
+                          className="px-1.5 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[10px] font-medium transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectEntry(entry);
+                          }}
+                          className="p-1.5 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 rounded-lg transition-colors"
+                          title="Inspect full entry & analysis"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={deletingId === entry.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDeleteId(entry.id);
+                          }}
+                          className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors disabled:opacity-50"
+                          title="Delete record (Zero-Trust IDOR check enforced)"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

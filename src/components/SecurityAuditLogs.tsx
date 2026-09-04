@@ -10,24 +10,24 @@ export const SecurityAuditLogs: React.FC = () => {
   const [selectedThreatFilter, setSelectedThreatFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
-  const fetchAuditLogs = async () => {
-    setLoading(true);
+  const fetchAuditLogs = async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
       const data = await safeFetchJson<{ success: boolean; logs: SecurityAuditLog[]; activeUid: string }>('/api/security/audit-logs');
       if (data.success) {
         setLogs(data.logs);
         setActiveUid(data.activeUid);
       }
-    } catch (err) {
-      console.error('Failed to fetch audit logs', err);
+    } catch {
+      // Background poll handled silently
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAuditLogs();
-    const interval = setInterval(fetchAuditLogs, 6000);
+    fetchAuditLogs(true);
+    const interval = setInterval(() => fetchAuditLogs(false), 15000);
     return () => clearInterval(interval);
   }, []);
 

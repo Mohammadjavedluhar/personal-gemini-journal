@@ -44,7 +44,7 @@ export class ApiError extends Error {
 export async function safeFetch<T = any>(
   url: string,
   options: RequestInit = {},
-  retries: number = 2
+  retries: number = 0
 ): Promise<SafeFetchResponse<T>> {
   const method = options.method || 'GET';
   const headers = new Headers(options.headers || {});
@@ -52,9 +52,6 @@ export async function safeFetch<T = any>(
   if (!headers.has('Accept')) {
     headers.set('Accept', 'application/json, text/plain, */*');
   }
-
-  const debugPrefix = `[SafeFetch ${method} ${url}]`;
-  console.log(`${debugPrefix} Initiating request...`);
 
   let response: Response;
   try {
@@ -64,12 +61,10 @@ export async function safeFetch<T = any>(
     });
   } catch (networkErr: any) {
     if (retries > 0) {
-      console.warn(`${debugPrefix} Transient network issue, retrying in 800ms (${retries} attempts left)...`);
-      await new Promise((r) => setTimeout(r, 800));
+      await new Promise((r) => setTimeout(r, 400));
       return safeFetch<T>(url, options, retries - 1);
     }
     const message = networkErr?.message || 'Network connection failed';
-    console.error(`${debugPrefix} Network failure:`, networkErr);
     throw new ApiError(
       `Network error communicating with ${url}: ${message}`,
       0,
@@ -85,8 +80,7 @@ export async function safeFetch<T = any>(
   let rawText = '';
   try {
     rawText = await response.text();
-  } catch (readErr: any) {
-    console.error(`${debugPrefix} Failed to read response stream:`, readErr);
+  } catch {
     throw new ApiError(
       `Could not read response text from ${url}`,
       response.status,
@@ -96,12 +90,7 @@ export async function safeFetch<T = any>(
     );
   }
 
-  // 2. LOG THE RAW TEXT RESPONSE FOR DEBUGGING
-  console.log(
-    `${debugPrefix} Status: ${response.status} ${response.statusText} | Content-Type: "${contentType}" | Length: ${rawText.length} bytes`
-  );
-
-  // 3. CHECK IF CONTENT IS TRANSIENT HTML / DEV SERVER STARTUP PAGE
+  // 2. CHECK IF CONTENT IS TRANSIENT HTML / DEV SERVER STARTUP PAGE
   const isHtml = rawText.trim().startsWith('<') || 
                  rawText.toLowerCase().includes('<!doctype') || 
                  rawText.toLowerCase().includes('<html') ||
@@ -110,8 +99,7 @@ export async function safeFetch<T = any>(
 
   // If server was starting up and returned "Starting Server..." HTML page, auto-retry once
   if (isHtml && rawText.includes('Starting Server...') && retries > 0) {
-    console.log(`${debugPrefix} Dev server starting up. Retrying request in 1000ms...`);
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 600));
     return safeFetch<T>(url, options, retries - 1);
   }
 
@@ -145,11 +133,6 @@ export async function safeFetch<T = any>(
       } else {
         errorMessage = `Server returned non-JSON response (Status ${response.status}): ${rawText.slice(0, 150)}`;
       }
-      
-      console.error(
-        `${debugPrefix} Expected JSON but received ${isHtml ? 'HTML Response' : 'Plaintext'}.`,
-        { status: response.status, url, preview: rawText.slice(0, 300) }
-      );
     } else if (parsedData && typeof parsedData === 'object' && 'error' in (parsedData as any)) {
       errorMessage = (parsedData as any).error;
     } else {

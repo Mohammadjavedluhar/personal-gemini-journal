@@ -70,16 +70,9 @@ export const JournalComposer: React.FC<JournalComposerProps> = ({
 
     setErrorMsg(null);
     setIsAnalyzing(true);
-    setAnalysisStep('Applying Cryptographic Boundary & High-Entropy Nonce...');
+    setAnalysisStep('Generating Zero-Trust structured reflection & emotional insights...');
 
     try {
-      // Step 1: Simulated Nonce Generation UI feedback
-      await new Promise((r) => setTimeout(r, 400));
-      setAnalysisStep('Zero Local Secret Isolation (Accessing IAM Secret Manager)...');
-      
-      await new Promise((r) => setTimeout(r, 300));
-      setAnalysisStep('Gemini Structured Analysis (Strict JSON Schema Validation)...');
-
       const data = await safeFetchJson<{
         success: boolean;
         analysis: GeminiJournalAnalysis;

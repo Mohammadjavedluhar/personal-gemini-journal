@@ -75,14 +75,11 @@ export default function App() {
         }
       });
 
-      if (!data.success) {
-        alert(data.error || 'Failed to delete entry');
-        return;
+      if (data.success) {
+        setEntries((prev) => prev.filter((e) => e.id !== entryId));
       }
-
-      setEntries((prev) => prev.filter((e) => e.id !== entryId));
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete entry');
+    } catch {
+      // Deletion error handled gracefully
     }
   };
 

@@ -9,23 +9,24 @@ export const StrideSecurityMatrix: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchStrideData = async () => {
+  const fetchStrideData = async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
       const data = await safeFetchJson<{ success: boolean; matrix: StrideMatrixItem[]; totalAuditLogs: number }>('/api/security/stride-matrix');
       if (data.success) {
         setMatrix(data.matrix);
         setTotalLogs(data.totalAuditLogs || 0);
       }
-    } catch (err) {
-      console.error('Failed to fetch STRIDE status', err);
+    } catch {
+      // Background poll handled silently
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStrideData();
-    const interval = setInterval(fetchStrideData, 5000);
+    fetchStrideData(true);
+    const interval = setInterval(() => fetchStrideData(false), 15000);
     return () => clearInterval(interval);
   }, []);
 
