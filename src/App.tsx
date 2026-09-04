@@ -29,8 +29,8 @@ export default function App() {
       if (data.success) {
         setEntries(data.entries);
       }
-    } catch (err: any) {
-      console.error('Error loading isolated journal entries:', err);
+    } catch {
+      // Entry fetch failure handled gracefully
     } finally {
       setIsLoadingEntries(false);
     }

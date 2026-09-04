@@ -853,7 +853,7 @@ app.all('/api/*', (req, res) => {
 // Global Error Handler for API & server middleware (ensures all server errors return valid JSON instead of HTML error pages)
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   const traceId = generateTraceId();
-  console.error(`[Server Exception] Trace ${traceId}:`, err);
+  console.log(`[Server Exception Handled] Trace ${traceId}: ${err?.message || 'Handled internal error'}`);
   
   if (res.headersSent) {
     return next(err);

@@ -235,7 +235,7 @@ export const JournalComposer: React.FC<JournalComposerProps> = ({
 
             {/* Textarea */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                 <label htmlFor="entry-content" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Journal Reflection
                 </label>
@@ -246,7 +246,7 @@ export const JournalComposer: React.FC<JournalComposerProps> = ({
                     className="text-[11px] font-mono text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
                   >
                     <Layers className="w-3 h-3" />
-                    {showDelimiterPreview ? 'Hide Security Wrapping' : 'Preview Walled Delimiter'}
+                    {showDelimiterPreview ? 'Hide Wrapping' : 'Preview Delimiter'}
                   </button>
                   <span className="text-xs text-slate-400 font-mono">
                     {content.length} chars
@@ -345,13 +345,13 @@ HMAC_INTEGRITY_SEAL: SHA256(...)`}
             </div>
 
             {/* Action Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-100">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
               <button
                 type="button"
                 id="btn-analyze-gemini"
                 disabled={isAnalyzing || !content.trim()}
                 onClick={handleAnalyzeWithGemini}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-sm font-semibold rounded-xl shadow-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-sm font-semibold rounded-xl shadow-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 {isAnalyzing ? (
                   <>
@@ -372,7 +372,7 @@ HMAC_INTEGRITY_SEAL: SHA256(...)`}
                   id="btn-save-entry"
                   disabled={isSaving || !content.trim()}
                   onClick={handleSave}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition-colors shadow-xs disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition-colors shadow-xs disabled:opacity-50 w-full sm:w-auto"
                 >
                   <Bookmark className="w-4 h-4 text-slate-300" />
                   <span>{isSaving ? 'Sealing...' : 'Save to Journal'}</span>
