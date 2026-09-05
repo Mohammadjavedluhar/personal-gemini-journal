@@ -9,6 +9,20 @@ const PORT = 3000;
 
 app.use(express.json({ limit: '1mb' }));
 
+// Normalize rewritten paths from Vercel / serverless reverse proxies
+app.use((req, res, next) => {
+  const matchedPath = (req.headers['x-matched-path'] || req.headers['x-now-route-matches']) as string | undefined;
+  if (matchedPath && matchedPath.startsWith('/api')) {
+    req.url = matchedPath;
+  } else if (req.query && req.query.path) {
+    const queryPath = Array.isArray(req.query.path) ? req.query.path.join('/') : (req.query.path as string);
+    req.url = '/api/' + queryPath;
+  } else if (req.url.startsWith('/journal/') || req.url.startsWith('/health') || req.url.startsWith('/security/')) {
+    req.url = '/api' + req.url;
+  }
+  next();
+});
+
 // In-Memory Secure Storage (Simulating Isolated Firestore Collections with strict UID indices)
 const journalDatabase: JournalEntry[] = [];
 const auditLogsDatabase: SecurityAuditLog[] = [];
